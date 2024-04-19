@@ -926,9 +926,12 @@ MonoBehaviour:
   rayDist: 0.6
   jumpPower: 10
   jumpInterval: 0.3
+  jumpPullBack: 5
+  fallingGravity: 15
   flightTimer: 6
   BulletClone: {fileID: 1128669605612483373, guid: b84c66cb3d1453f46aeed54c49c392ca, type: 3}
   launchArea: {fileID: 1855660284}
+  chargeTime: 1
 --- !u!58 &1050480639
 CircleCollider2D:
   m_ObjectHideFlags: 0

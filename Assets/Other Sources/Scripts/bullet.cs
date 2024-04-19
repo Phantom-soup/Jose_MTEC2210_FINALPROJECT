@@ -16,4 +16,13 @@ public class bullet : MonoBehaviour
     {
         rb.velocity = transform.right * speed;
     }
+
+    public void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == "Player"){}
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 }

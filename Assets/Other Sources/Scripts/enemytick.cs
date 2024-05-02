@@ -2,26 +2,33 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class bullet : MonoBehaviour
+public class enemytick : MonoBehaviour
 {
     public float speed = 10;
-    private Rigidbody2D rb;
     public GameManager gm;
+    private Rigidbody2D rb;
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
         gm = gameObject.AddComponent<GameManager>();
+        rb = GetComponent<Rigidbody2D>();
     }
 
     private void FixedUpdate()
     {
-        rb.velocity = transform.right * speed;
+        rb.velocity = transform.up * speed;
     }
 
     public void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Player"){}
+        if (collision.tag == "Player") 
+        {
+            gm.AdjustHealth(-2.2f);
+            Destroy(gameObject);
+        }
+        else if (collision.tag == "Shotzo") {
+
+        }
         else
         {
             Destroy(gameObject);

@@ -11,28 +11,27 @@ public class playercontroller : MonoBehaviour
     public float fSx = 5;
     public float fSy = 5;
 
-    float xMove;
-    float yMove;
+    public float xMove;
+    public float yMove;
 
     //Jumping
     bool jumpFlag = false;
-    public float rayDist = 0.6f;
+    bool canJump = false;
     
     public float jumpPower = 10;
     public float jumpInterval = 0.3f;
 
     public float jumpPullBack = 5;
     public float fallingGravity = 15;
+    public float maxFallSpeed = -9;
 
     private float jumpTime;
-
 
     //Flying
     private float tempFTimer;
     public float flightTimer = 6;
-    bool flyState = false;
     bool flightLimit = false;
-
+    bool flyState = false;
 
     //Shooting
     public GameObject BulletClone;
@@ -43,8 +42,15 @@ public class playercontroller : MonoBehaviour
     private float chargingFire;
 
     //Other
+    public Vector2 boxSize;
+    public float castDistance;
+
     private Rigidbody2D rb;
     private SpriteRenderer sr;
+    public GameManager gm;
+
+    private GameObject currentOneWayPlatform;
+    public BoxCollider2D playerCollider;
     private float timeElapsed;
 
     void Start()
@@ -58,42 +64,92 @@ public class playercontroller : MonoBehaviour
         xMove = Input.GetAxis("Horizontal");
         yMove = Input.GetAxis("Vertical");
 
+
+        //Flying
         if (Grounded())
         {
             jumpTime = 0;
+            canJump = false;
             flyState = false;
+            flightLimit = false;
+            tempFTimer = 0;
+            gm.AdjustFlightTime(flightTimer);
         }
         else
         {
             if (Input.GetKeyDown(KeyCode.Z) && flyState)
             {
-                Debug.Log("flyState has become false!");
                 flyState = false;
             }
             else if (Input.GetKeyDown(KeyCode.Z) && flyState == false)
             {
-                Debug.Log("flyState has become true!");
                 flyState = true;
             }
+        }
+        if (flyState)
+        {
+            tempFTimer += Time.deltaTime;
+            gm.DecreasingFlightTime((float)tempFTimer);
+        }
+
+        if (tempFTimer > flightTimer)
+        {
+            flightLimit = true;
+        }
+
+        if (flightLimit)
+        {
+            flyState = false;
+        }
+
+        //Jumping
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            canJump = true;
         }
 
         if (Input.GetKey(KeyCode.Z))
         {
             jumpTime += Time.deltaTime;
-            jumpFlag = true;
+            if (canJump)
+            {
+                jumpFlag = true;
+            }
         }
 
         if (Input.GetKeyUp(KeyCode.Z) | jumpTime > jumpInterval)
         {
             jumpFlag = false;
+            jumpTime = jumpInterval;
         }
 
 
+        //Shooting
         if (Input.GetKeyDown(KeyCode.X))
         {
-            Instantiate(BulletClone, launchArea.position, transform.rotation);
+            isCharging = true;
         }
 
+        if (Input.GetKey(KeyCode.X))
+        {
+            if (isCharging)
+            {
+                chargingFire += Time.deltaTime;
+            }
+        }
+
+        if (Input.GetKeyUp(KeyCode.X))
+        {
+            if (chargingFire > chargeTime)
+            {
+                Instantiate(BulletClone, launchArea.position, transform.rotation);
+            }
+            chargingFire = 0;
+            isCharging = false;
+        }
+
+        //Character flip
+        
         if (xMove != 0)
         {
             if (xMove < 0)
@@ -105,36 +161,82 @@ public class playercontroller : MonoBehaviour
                 transform.rotation = Quaternion.Euler(Vector3.up * 0);
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            gm.AdjustHealth(-2.2f);
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            gm.AdjustHealth(10f);
+        }
+
+        if (gm.playerHealth < 0f)
+        {
+            Destroy(gameObject);
+        }
+
+        if (rb.velocity.y <= maxFallSpeed)
+        {
+            rb.velocity = new Vector2(xMove * fSx * Time.deltaTime, Mathf.Clamp(rb.velocity.y, maxFallSpeed, maxFallSpeed));
+        }
     }
 
     bool Grounded()
     {
-        return Physics2D.Raycast(transform.position, Vector2.down, rayDist, LayerMask.GetMask("Ground"));
+        //return Physics2D.Raycast(transform.position, Vector2.down, 0.6f, LayerMask.GetMask("Ground"));
+        return Physics2D.BoxCast(transform.position, boxSize, 0, Vector2.down, castDistance, LayerMask.GetMask("Ground"));
+    }
+
+    bool Platform()
+    {
+        return Physics2D.BoxCast(transform.position, boxSize, 0, Vector2.down, castDistance, LayerMask.GetMask("Platform"));
+    }
+
+    bool Bonk()
+    {
+        return Physics2D.Raycast(transform.position, Vector2.up, 0.6f, LayerMask.GetMask("Ground"));
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireCube(transform.position - transform.up * castDistance, boxSize);
     }
 
     void FixedUpdate()
     {
-        rb.velocity = new Vector2(xMove * speed * Time.deltaTime, rb.velocity.y);
+        //Flying
+        if (flyState)
+        {
+            rb.gravityScale = 0;
+            rb.velocity = new Vector2(xMove * fSx * Time.deltaTime, yMove * fSy * Time.deltaTime);
+        }
+        else
+        {
+            rb.velocity = new Vector2(xMove * speed * Time.deltaTime, rb.velocity.y);
+        }
 
-        if (rb.velocity.y > 0)
+        //Falling
+        if (rb.velocity.y > 0 && flyState == false)
         {
             rb.gravityScale = jumpPullBack;
         }
 
-        if (rb.velocity.y <= 0)
+        if (rb.velocity.y <= 0 && flyState == false)
         {
             rb.gravityScale = fallingGravity;
         }
 
+        //Jumping
         if (jumpFlag)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpPower);
-        }
-
-        if (flyState)
-        {
-            rb.gravityScale = 0;
-            rb.velocity = new Vector2(xMove * speed * Time.deltaTime, yMove * speed * Time.deltaTime);
+            
+            if(Bonk())
+            {
+                jumpTime = jumpInterval;
+            }
         }
     }
 }

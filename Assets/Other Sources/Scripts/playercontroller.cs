@@ -28,7 +28,7 @@ public class playercontroller : MonoBehaviour
     private float jumpTime;
 
     //Flying
-    private float tempFTimer;
+    private float tempFTimer = 0;
     public float flightTimer = 6;
     bool flightLimit = false;
     bool flyState = false;
@@ -50,7 +50,6 @@ public class playercontroller : MonoBehaviour
     public GameManager gm;
 
     private GameObject currentOneWayPlatform;
-    public BoxCollider2D playerCollider;
     private float timeElapsed;
 
     void Start()
@@ -66,14 +65,17 @@ public class playercontroller : MonoBehaviour
 
 
         //Flying
-        if (Grounded())
+        if (Grounded() | Platform())
         {
-            jumpTime = 0;
-            canJump = false;
-            flyState = false;
-            flightLimit = false;
-            tempFTimer = 0;
-            gm.AdjustFlightTime(flightTimer);
+            if (rb.velocity.y == 0)
+            {
+                jumpTime = 0;
+                canJump = false;
+                flyState = false;
+                flightLimit = false;
+                tempFTimer = 0;
+                gm.AdjustFlightTime(flightTimer);
+            }
         }
         else
         {
@@ -101,6 +103,7 @@ public class playercontroller : MonoBehaviour
         {
             flyState = false;
         }
+
 
         //Jumping
         if (Input.GetKeyDown(KeyCode.Z))
@@ -148,8 +151,8 @@ public class playercontroller : MonoBehaviour
             isCharging = false;
         }
 
+
         //Character flip
-        
         if (xMove != 0)
         {
             if (xMove < 0)
@@ -161,6 +164,8 @@ public class playercontroller : MonoBehaviour
                 transform.rotation = Quaternion.Euler(Vector3.up * 0);
             }
         }
+
+
 
         if (Input.GetKeyDown(KeyCode.Q))
         {
@@ -237,6 +242,15 @@ public class playercontroller : MonoBehaviour
             {
                 jumpTime = jumpInterval;
             }
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == "enemybullet")
+        {
+            gm.AdjustHealth(-2.2f);
+            Destroy(collision.gameObject);
         }
     }
 }

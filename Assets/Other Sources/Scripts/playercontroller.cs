@@ -139,8 +139,20 @@ public class playercontroller : MonoBehaviour
             if (isCharging)
             {
                 chargingFire += Time.deltaTime;
+
+                if (chargingFire < chargeTime)
+                {
+                    sr.color = Color.gray;
+                }
+                
+                if(chargingFire > chargeTime)
+                {
+                    sr.color = Color.yellow;
+                }
             }
         }
+
+
 
         if (Input.GetKeyUp(KeyCode.X))
         {
@@ -149,6 +161,7 @@ public class playercontroller : MonoBehaviour
                 Instantiate(BulletClone, launchArea.position, transform.rotation);
             }
             chargingFire = 0;
+            sr.color = Color.white;
             isCharging = false;
         }
 

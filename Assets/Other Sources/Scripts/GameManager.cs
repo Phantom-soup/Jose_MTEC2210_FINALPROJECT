@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using JetBrains.Annotations;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -21,7 +22,10 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-
+        if (playerHealth < 0)
+        {
+            SceneManager.LoadScene(0);   
+        }
     }
 
     public void AdjustHealth(float difference)

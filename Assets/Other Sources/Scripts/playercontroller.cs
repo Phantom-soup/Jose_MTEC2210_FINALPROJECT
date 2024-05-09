@@ -51,6 +51,7 @@ public class playercontroller : MonoBehaviour
 
     private GameObject currentOneWayPlatform;
     private float timeElapsed;
+    bool canTakeDamage = true;
 
     void Start()
     {
@@ -91,7 +92,7 @@ public class playercontroller : MonoBehaviour
         if (flyState)
         {
             tempFTimer += Time.deltaTime;
-            gm.DecreasingFlightTime((float)tempFTimer);
+            
         }
 
         if (tempFTimer > flightTimer)
@@ -249,8 +250,31 @@ public class playercontroller : MonoBehaviour
     {
         if (collision.tag == "enemybullet")
         {
-            gm.AdjustHealth(-2.2f);
-            Destroy(collision.gameObject);
+            if (canTakeDamage)
+            {
+                StartCoroutine(BlinkRed());
+                gm.AdjustHealth(-2.2f);
+                Destroy(collision.gameObject);
+            }
         }
+    }
+
+    public IEnumerator BlinkRed()
+    {
+        WaitForSeconds delay = new WaitForSeconds(0.05f);
+
+        canTakeDamage = false;
+        sr.color = Color.red;
+        yield return delay;
+        sr.color = Color.white;
+        yield return delay;
+        sr.color = Color.red;
+        yield return delay;
+        sr.color = Color.white;
+        yield return delay;
+        sr.color = Color.red;
+        yield return delay;
+        sr.color = Color.white;
+        canTakeDamage = true;
     }
 }

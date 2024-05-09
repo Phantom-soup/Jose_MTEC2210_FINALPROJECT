@@ -43,10 +43,4 @@ public class GameManager : MonoBehaviour
             fTimeRemaining = 3f;
         }
     }
-
-    public void DecreasingFlightTime(float difference)
-    {
-        fTimeRemaining -= difference;
-        flightTime.fillAmount = fTimeRemaining / 3f;
-    }
 }
